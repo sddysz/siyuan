@@ -113,7 +113,9 @@ export class Protyle {
                             break;
                         case "transactions":
                             data.data[0].doOperations.forEach((item: IOperation) => {
-                                if (!this.protyle.preview.element.classList.contains("fn__none")) {
+                                if (!this.protyle.preview.element.classList.contains("fn__none") &&
+                                    item.action !== "updateAttrs"   // 预览模式下点击只读
+                                ) {
                                     this.protyle.preview.render(this.protyle);
                                 } else {
                                     onTransaction(this.protyle, item, false);
@@ -265,8 +267,9 @@ export class Protyle {
             } else {
                 this.getDoc(mergedOptions);
             }
+        } else {
+            this.protyle.contentElement.classList.add("protyle-content--transition");
         }
-        this.protyle.contentElement.classList.add("protyle-content--transition");
     }
 
     private getDoc(mergedOptions: IOptions) {
@@ -339,6 +342,7 @@ export class Protyle {
         if (mergedOptions.after) {
             mergedOptions.after(this);
         }
+        this.protyle.contentElement.classList.add("protyle-content--transition");
     }
 
     private init() {

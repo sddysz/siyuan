@@ -105,8 +105,8 @@ func RemoveTag(label string) (err error) {
 }
 
 func RenameTag(oldLabel, newLabel string) (err error) {
-	if treenode.ContainsMarker(newLabel) {
-		return errors.New(Conf.Language(112))
+	if invalidChar := treenode.ContainsMarker(newLabel); "" != invalidChar {
+		return errors.New(fmt.Sprintf(Conf.Language(112), invalidChar))
 	}
 
 	newLabel = strings.TrimSpace(newLabel)
@@ -228,19 +228,19 @@ func sortTags(tags Tags) {
 	switch Conf.Tag.Sort {
 	case util.SortModeNameASC:
 		sort.Slice(tags, func(i, j int) bool {
-			return util.PinYinCompare(util.RemoveEmoji(tags[i].Name), util.RemoveEmoji(tags[j].Name))
+			return util.PinYinCompare(util.RemoveEmojiInvisible(tags[i].Name), util.RemoveEmojiInvisible(tags[j].Name))
 		})
 	case util.SortModeNameDESC:
 		sort.Slice(tags, func(j, i int) bool {
-			return util.PinYinCompare(util.RemoveEmoji(tags[i].Name), util.RemoveEmoji(tags[j].Name))
+			return util.PinYinCompare(util.RemoveEmojiInvisible(tags[i].Name), util.RemoveEmojiInvisible(tags[j].Name))
 		})
 	case util.SortModeAlphanumASC:
 		sort.Slice(tags, func(i, j int) bool {
-			return natsort.Compare(util.RemoveEmoji((tags)[i].Name), util.RemoveEmoji((tags)[j].Name))
+			return natsort.Compare(util.RemoveEmojiInvisible((tags)[i].Name), util.RemoveEmojiInvisible((tags)[j].Name))
 		})
 	case util.SortModeAlphanumDESC:
 		sort.Slice(tags, func(i, j int) bool {
-			return natsort.Compare(util.RemoveEmoji((tags)[j].Name), util.RemoveEmoji((tags)[i].Name))
+			return natsort.Compare(util.RemoveEmojiInvisible((tags)[j].Name), util.RemoveEmojiInvisible((tags)[i].Name))
 		})
 	case util.SortModeRefCountASC:
 		sort.Slice(tags, func(i, j int) bool { return (tags)[i].Count < (tags)[j].Count })
@@ -248,7 +248,7 @@ func sortTags(tags Tags) {
 		sort.Slice(tags, func(i, j int) bool { return (tags)[i].Count > (tags)[j].Count })
 	default:
 		sort.Slice(tags, func(i, j int) bool {
-			return natsort.Compare(util.RemoveEmoji((tags)[i].Name), util.RemoveEmoji((tags)[j].Name))
+			return natsort.Compare(util.RemoveEmojiInvisible((tags)[i].Name), util.RemoveEmojiInvisible((tags)[j].Name))
 		})
 	}
 }

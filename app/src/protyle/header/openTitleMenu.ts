@@ -28,11 +28,7 @@ import {openNewWindowById} from "../../window/openNewWindow";
 import {genImportMenu} from "../../menus/navigation";
 import {transferBlockRef} from "../../menus/block";
 
-export const openTitleMenu = (protyle: IProtyle, position: {
-    x: number
-    y: number
-    isLeft?: boolean
-}) => {
+export const openTitleMenu = (protyle: IProtyle, position: IPosition) => {
     hideTooltip();
     if (!window.siyuan.menus.menu.element.classList.contains("fn__none") &&
         window.siyuan.menus.menu.element.getAttribute("data-name") === "titleMenu") {
@@ -75,7 +71,13 @@ export const openTitleMenu = (protyle: IProtyle, position: {
             label: window.siyuan.languages.backlinks,
             accelerator: window.siyuan.config.keymap.editor.general.backlinks.custom,
             click: () => {
-                openBacklink(protyle);
+                openBacklink({
+                    app: protyle.app,
+                    blockId: protyle.block.id,
+                    rootId: protyle.block.rootID,
+                    useBlockId: protyle.block.showAll,
+                    title: protyle.title ? (protyle.title.editElement.textContent || "Untitled") : null
+                });
             }
         }).element);
         window.siyuan.menus.menu.append(new MenuItem({
@@ -83,7 +85,13 @@ export const openTitleMenu = (protyle: IProtyle, position: {
             label: window.siyuan.languages.graphView,
             accelerator: window.siyuan.config.keymap.editor.general.graphView.custom,
             click: () => {
-                openGraph(protyle);
+                openGraph({
+                    app: protyle.app,
+                    blockId: protyle.block.id,
+                    rootId: protyle.block.rootID,
+                    useBlockId: protyle.block.showAll,
+                    title: protyle.title ? (protyle.title.editElement.textContent || "Untitled") : null
+                });
             }
         }).element);
         /// #endif
@@ -200,6 +208,7 @@ export const openTitleMenu = (protyle: IProtyle, position: {
             }
         }).element);
         window.siyuan.menus.menu.append(new MenuItem({
+            icon: "iconFolder",
             label: window.siyuan.languages.showInFolder,
             click: () => {
                 showFileInFolder(path.join(window.siyuan.config.system.dataDir, protyle.notebookId, protyle.path));
@@ -211,12 +220,17 @@ export const openTitleMenu = (protyle: IProtyle, position: {
                 label: window.siyuan.languages.fileHistory,
                 icon: "iconHistory",
                 click() {
-                    openDocHistory({app: protyle.app, id: protyle.block.rootID, notebookId: protyle.notebookId, pathString: response.data.name});
+                    openDocHistory({
+                        app: protyle.app,
+                        id: protyle.block.rootID,
+                        notebookId: protyle.notebookId,
+                        pathString: response.data.name
+                    });
                 }
             }).element);
         }
         genImportMenu(protyle.notebookId, protyle.path);
-        window.siyuan.menus.menu.append(exportMd(protyle.block.showAll ? protyle.block.id : protyle.block.rootID));
+        window.siyuan.menus.menu.append(exportMd(protyle.block.showAll ? protyle.block.id : protyle.block.rootID, protyle.wysiwyg.element.getAttribute("data-doc-type")));
 
         if (protyle?.app?.plugins) {
             emitOpenMenu({
@@ -239,7 +253,7 @@ ${window.siyuan.languages.createdAt} ${dayjs(response.data.ial.id.substr(0, 14))
         /// #if MOBILE
         window.siyuan.menus.menu.fullscreen();
         /// #else
-        window.siyuan.menus.menu.popup(position, position.isLeft);
+        window.siyuan.menus.menu.popup(position);
         /// #endif
     });
 };

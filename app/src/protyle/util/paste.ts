@@ -125,10 +125,10 @@ export const pasteText = (protyle: IProtyle, textPlain: string, nodeElement: Ele
 export const paste = async (protyle: IProtyle, event: (ClipboardEvent | DragEvent) & { target: HTMLElement }) => {
     event.stopPropagation();
     event.preventDefault();
-    let textHTML;
-    let textPlain;
-    let siyuanHTML;
-    let files;
+    let textHTML: string;
+    let textPlain: string;
+    let siyuanHTML: string;
+    let files: FileList | DataTransferItemList;
     if ("clipboardData" in event) {
         textHTML = event.clipboardData.getData("text/html");
         textPlain = event.clipboardData.getData("text/plain");
@@ -194,6 +194,37 @@ export const paste = async (protyle: IProtyle, event: (ClipboardEvent | DragEven
         textHTML = Lute.Sanitize(textHTML);
     }
 
+    if (protyle && protyle.app && protyle.app.plugins) {
+        for (let i = 0; i < protyle.app.plugins.length; i++) {
+            const response: IObject & { files: FileList } = await new Promise((resolve) => {
+                const emitResult = protyle.app.plugins[i].eventBus.emit("paste", {
+                    protyle,
+                    resolve,
+                    textHTML,
+                    textPlain,
+                    siyuanHTML,
+                    files
+                });
+                if (emitResult) {
+                    resolve(undefined);
+                }
+            });
+
+            if (response?.textHTML) {
+                textHTML = response.textHTML;
+            }
+            if (response?.textPlain) {
+                textPlain = response.textPlain;
+            }
+            if (response?.siyuanHTML) {
+                siyuanHTML = response.siyuanHTML;
+            }
+            if (response?.files) {
+                files = response.files as FileList;
+            }
+        }
+    }
+
     const nodeElement = hasClosestBlock(event.target);
     if (!nodeElement) {
         if (files && files.length > 0) {
@@ -211,7 +242,9 @@ export const paste = async (protyle: IProtyle, event: (ClipboardEvent | DragEven
         protyle.toolbar.getCurrentType(range).includes("code")) {
         // 粘贴在代码位置
         // https://github.com/siyuan-note/siyuan/issues/9142
-        if (range.toString() !== "" && range.startContainer.nodeType !== 3 && (range.startContainer as Element).classList.contains("protyle-action")) {
+        // https://github.com/siyuan-note/siyuan/issues/9323
+        // 需排除行内代码 https://github.com/siyuan-note/siyuan/issues/9369
+        if (nodeElement.querySelector(".protyle-action")?.contains(range.startContainer)) {
             range.setStart(nodeElement.querySelector(".hljs").firstChild, 0);
         }
         insertHTML(textPlain, protyle);

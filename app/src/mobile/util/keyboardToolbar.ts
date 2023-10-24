@@ -10,6 +10,7 @@ import {Constants} from "../../constants";
 import {focusByRange, getSelectionPosition} from "../../protyle/util/selection";
 import {getCurrentEditor} from "../editor";
 import {fontEvent, getFontNodeElements} from "../../protyle/toolbar/Font";
+import {hideElements} from "../../protyle/ui/hideElements";
 
 let renderKeyboardToolbarTimeout: number;
 let showUtil = false;
@@ -21,10 +22,10 @@ const getSlashItem = (value: string, icon: string, text: string, focus = "false"
     } else {
         iconHTML = icon;
     }
-    return `<div class="keyboard__slash-item" data-focus="${focus}" data-value="${encodeURIComponent(value)}">
+    return `<button class="keyboard__slash-item" data-focus="${focus}" data-value="${encodeURIComponent(value)}">
     ${iconHTML}
     <span class="keyboard__slash-text">${text}</span>
-</div>`;
+</button>`;
 };
 
 export const renderTextMenu = (protyle: IProtyle, toolbarElement: Element) => {
@@ -500,9 +501,9 @@ export const initKeyboardToolbar = () => {
 </div>
 <div class="keyboard__util"></div>`;
     toolbarElement.addEventListener("click", (event) => {
+        const protyle = getCurrentEditor()?.protyle;
         const target = event.target as HTMLElement;
         const slashBtnElement = hasClosestByClassName(event.target as HTMLElement, "keyboard__slash-item");
-        const protyle = getCurrentEditor()?.protyle;
         if (slashBtnElement && !slashBtnElement.getAttribute("data-type")) {
             const dataValue = decodeURIComponent(slashBtnElement.getAttribute("data-value"));
             protyle.hint.fill(dataValue, protyle, false);   // 点击后 range 会改变
@@ -592,6 +593,7 @@ export const initKeyboardToolbar = () => {
             return;
         } else if (["a", "block-ref", "inline-math", "inline-memo"].includes(type)) {
             if (!hasClosestByAttribute(range.startContainer, "data-type", "NodeCodeBlock")) {
+                hideElements(["util"], protyle);
                 protyle.toolbar.element.querySelector(`[data-type="${type}"]`).dispatchEvent(new CustomEvent("click"));
             }
             return;
@@ -635,7 +637,8 @@ export const initKeyboardToolbar = () => {
         } else if (type === "more") {
             protyle.breadcrumb.showMenu(protyle, {
                 x: 0,
-                y: 0
+                y: 0,
+                isLeft: true
             });
             activeBlur();
             hideKeyboardToolbar();
